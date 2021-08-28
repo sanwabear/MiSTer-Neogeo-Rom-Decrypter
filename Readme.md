@@ -1,10 +1,16 @@
 # Darksoft Neogeo Rom generator for MiSTer-FPGA by Aluzed
 
-Use decrypted **NeorageX** rom to get it working. 
+Use decrypted **NeorageX** or **MAME** rom to get it working. 
 
 Unzip the rom, add **generator.py** to the folder and execute with python : 
 ```
-python.exe (or python3 on linux/mac) generator.py
+python.exe (or python3 on linux/mac) generator.py <rom path> <MAME rom name> <dest path>
+```
+
+ex:
+
+```
+python.exe generator.py ..\mame_roms\rbff2 rbff2h ..\microsd\games
 ```
 
 It generates an extract folder, that you can add to your MiSTer-FPGA SD card.

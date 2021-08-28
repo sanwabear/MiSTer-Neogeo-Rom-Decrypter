@@ -10,11 +10,34 @@ import io
 import hashlib
 import glob
 from os import walk
+from xml.etree import ElementTree
+import pathlib
 
-dir_path = os.path.dirname(os.path.realpath(__file__))
+my_path = os.path.dirname(os.path.realpath(__file__))
+dir_path = my_path
+rom_name = ""
 
-if 1 in sys.argv:
+if len(sys.argv) > 1:
   dir_path = sys.argv[1]
+dest_path = dir_path
+rom_name = os.path.basename(pathlib.Path(dir_path).resolve())
+
+if len(sys.argv) > 2:
+  rom_name = sys.argv[2]
+
+if len(sys.argv) > 3:
+  dest_path = sys.argv[3]
+
+rom_names = []
+if len(rom_name) > 0:
+  tree = ElementTree.parse(my_path + os.path.sep + 'neogeo.xml')
+  softwares = tree.getroot().findall("software[@name='" + rom_name + "']")
+  for software in softwares:
+    roms = software.findall("./part/dataarea/rom")
+    for rom in roms:
+      rom_names.append(rom.attrib['name'].lower())
+if len(rom_names) > 0:
+  print("rom names [" + ', '.join(rom_names) + "] found.")
 
 f = [] # List dir files
 c_files = []
@@ -86,37 +109,37 @@ def convert_roms():
   print('start rom conversion for ' + dir_path)
 
   for (dirpath, dirnames, filenames) in walk(dir_path):
-    f.extend(filenames)
+    f.extend(filter(lambda x: x.lower() in rom_names, filenames))
     break
 
   for filename in f:
     # Get S Rom
-    if re.search(r'.s1$', filename) or re.search(r'[-_]s1.(rom|bin)', filename):
+    if re.search(r'\.s1$', filename) or re.search(r'[-_]s1\.(rom|bin)', filename):
       s_rom = filename
 
     # Get M Rom
-    if re.search(r'.m1$', filename) or re.search(r'[-_]m1.(rom|bin)$', filename):
+    if re.search(r'\.m1$', filename) or re.search(r'[-_]m1\.(rom|bin)$', filename):
       m1_rom = filename
 
     # Get P Roms
-    if re.search(r'.p\d$', filename) or re.search(r'[-_]p\d.(rom|bin)$', filename):
+    if re.search(r'\.p\d$', filename) or re.search(r'[-_]p\d\.(rom|bin)$', filename):
       p_files.append(filename)
 
     # Get C Roms
-    if re.search(r'[-_]c\d.(rom|bin)$', filename) or re.search(r'.c\d$', filename):
+    if re.search(r'[-_]c\d\.(rom|bin)$', filename) or re.search(r'\.c\d$', filename):
       c_files.append(filename)
 
     # Get V Roms
-    if re.search(r'.v\d$', filename) or re.search(r'[-_]v\d.(rom|bin)$', filename):
+    if re.search(r'\.v\d$', filename) or re.search(r'[-_]v\d\.(rom|bin)$', filename):
       v_files.append(filename)
 
   # Second loop for SP files
   for filename in f:
-    if re.search(r'.sp\d$', filename) or re.search(r'[-_]sp\d.(rom|bin)$', filename):
+    if re.search(r'\.sp\d$', filename) or re.search(r'[-_]sp\d\.(rom|bin)$', filename):
       p_files.append(filename)
 
   # Setting our export path
-  export_path = dir_path + os.path.sep + "export"
+  export_path = dest_path + os.path.sep + rom_name
 
   # Setting our SROM file path
   srom_path = export_path + os.path.sep + "srom"
@@ -186,7 +209,7 @@ def join_crom0(export_path, files):
     return None
 
   for f in files:
-    fp = open(f, "rb")
+    fp = open(dir_path + os.path.sep + f, "rb")
     inputs.append(fp)
 
   output = open(export_path,"wb")
@@ -220,5 +243,4 @@ except:
     print (sys.exc_info()[0])
     raise
 
-print('job done, press a key to exit...')
-input()
+print('job done.')
